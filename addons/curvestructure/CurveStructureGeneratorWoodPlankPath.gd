@@ -43,8 +43,18 @@ func _get_vertical_supports_mmi(data: CurveData) -> MultiMeshInstance3D:
 	multimesh.instance_count = num_supports * 2 # One support on either side.
 	
 	for i in range(num_supports):
-		var offset = i * offset_per_support
+		# Don't sample near the end, since it produces odd results.
+		var offset = min(i * offset_per_support, data.curve.get_baked_length() - 0.2)
 		var t = data.curve.sample_baked_with_rotation(offset, false, false)
+		
+		# This aligns the sampled basis vertically. I.e. keeps things horizontal rather than sloping a ton.
+		# Look at the z but at same Y as position, so only vertical poles are produced.
+		var look_at = (-t.basis.z * Vector3(1.0, 0.0, 1.0)).normalized()
+		t.basis = t.basis.looking_at(look_at)
+		
+		# TODO read from the plank transforms to get these transforms (plank transforms may be tweaked a lot from the base curve)
+		
+		# TODO based on the slope angle of the planks, 'skew' the left and right transforms so it appears more like an a-frame
 		
 		var width = data.get_width_at_offset(offset)
 		var height = supports_max_height # TODO raycast to get actual height.
@@ -57,6 +67,8 @@ func _get_vertical_supports_mmi(data: CurveData) -> MultiMeshInstance3D:
 		# Translate left and right (normalise so scale does not affect it)
 		var left_t = t.translated(t.basis.x.normalized() * width / 2.0).translated(-t.basis.y.normalized() * height / 2.0)
 		var right_t = t.translated(-t.basis.x.normalized() * width / 2.0).translated(-t.basis.y.normalized() * height / 2.0)
+		
+		# Ensure each is always facing upwards. i.e.
 		
 		multimesh.set_instance_transform(i, left_t)
 		multimesh.set_instance_transform(i + num_supports, right_t)
@@ -79,9 +91,17 @@ func _get_top_planks_mmi(data: CurveData) -> MultiMeshInstance3D:
 	multimesh.instance_count = num_planks
 	
 	for i in range(num_planks):
-		var offset = i * offset_per_plank
+		# Don't sample near the end, since it produces odd results.
+		var offset = min(i * offset_per_plank, data.curve.get_baked_length() - 0.2)
 		var structure_width = data.get_width_at_offset(offset)
+	
 		var t = data.curve.sample_baked_with_rotation(offset, false, false)
+		
+		# This aligns the sampled basis vertically. I.e. keeps things horizontal rather than sloping a ton.
+		t.basis = t.basis.looking_at(-t.basis.z)
+		
+		# TODO tweak the rotation around z basis based on the slope (maybe customisable via data?)
+		
 		t.basis.x *= structure_width
 		t.basis.z *= plank_width
 		t.basis.y *= plank_height
