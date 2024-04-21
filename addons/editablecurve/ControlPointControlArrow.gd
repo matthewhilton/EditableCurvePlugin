@@ -10,6 +10,9 @@ func _handle_drag_event(event: InputEvent):
 	if !(event is InputEventMouseMotion):
 		return
 	
+	# TODO instead of using global_position, use the pos on the node first touched by the input event
+	# Stops weird snapping when clicking outside of the center.
+	
 	var plane = Plane(drag_start_normal, global_position)
 	
 	var cam := get_viewport().get_camera_3d()

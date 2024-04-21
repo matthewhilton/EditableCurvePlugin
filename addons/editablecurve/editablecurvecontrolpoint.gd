@@ -3,14 +3,14 @@ class_name EditableCurveControlPoint extends StaticBody3D
 # Shared context between all control points.
 @export var context: EditableCurveContext
 
-# What index am I representing/controlling on the curve.
-var child_index := 0
-
 signal moved_while_selected(n: EditableCurveControlPoint)
 
 @export var controls: Array[ControlPointControl] = []
 
 func _ready():
+	if self not in context.known_points:
+		context.known_points.append(self)
+	
 	set_notify_transform(true)
 
 	context.selected_control_point_changed.connect(_update_control_visibility)
@@ -18,10 +18,15 @@ func _ready():
 	
 	for control in controls:
 		control.movement_translate.connect(_handle_translate)
-
+	
 func _input_event(camera, event, position, normal, shape_idx):
+	if !context.controls_active:
+		return
+	
 	if event.is_action_pressed("select_control_point"):
 		_try_select()
+	
+	# TODO when click outside, deselect self.
 
 func _is_selectable():
 	return true
@@ -39,6 +44,9 @@ func _try_select():
 		return
 
 func _notification(what):
+	if !context || !context.controls_active:
+		return
+	
 	if what == NOTIFICATION_TRANSFORM_CHANGED && _is_selected():
 		moved_while_selected.emit(self)
 
@@ -48,3 +56,6 @@ func _update_control_visibility():
 
 func _handle_translate(movement: Vector3):
 	global_position += movement
+
+func get_curve_index() -> int:
+	return context.known_points.find(self)

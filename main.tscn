@@ -1,0 +1,62 @@
+[gd_scene load_steps=8 format=3 uid="uid://c4l204c7uom0j"]
+
+[ext_resource type="Script" path="res://main.gd" id="1_1c1sy"]
+[ext_resource type="Script" path="res://addons/editablecurve/EditableCurveInstance.gd" id="2_6bs5a"]
+[ext_resource type="Script" path="res://addons/editablecurve/EditableCurveData.gd" id="3_ij8va"]
+[ext_resource type="PackedScene" uid="uid://c8uwnxobw8xmk" path="res://addons/editablecurve/editable_curve_control_point.tscn" id="4_qj58e"]
+
+[sub_resource type="Environment" id="Environment_kihj7"]
+
+[sub_resource type="Resource" id="Resource_17b5c"]
+script = ExtResource("3_ij8va")
+
+[sub_resource type="Curve3D" id="Curve3D_5vkxo"]
+
+[node name="Node3D" type="Node3D" node_paths=PackedStringArray("delete_selected", "add_new_selected", "curve", "path")]
+script = ExtResource("1_1c1sy")
+delete_selected = NodePath("VBoxContainer/Delete selected")
+add_new_selected = NodePath("VBoxContainer/Add new")
+curve = NodePath("EditableCurve")
+path = NodePath("CSGPolygon3D/Path3D")
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.984677, 0.174387, 0, -0.174387, 0.984677, 0, 1.05312, 2.19491)
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_kihj7")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.891292, 0.360817, 0.27461, -0.453431, 0.709244, 0.539791, 0, -0.605627, 0.795748, 0, 0, 0)
+
+[node name="EditableCurve" type="Node3D" parent="."]
+script = ExtResource("2_6bs5a")
+data = SubResource("Resource_17b5c")
+control_point_scene = ExtResource("4_qj58e")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="Delete selected" type="Button" parent="VBoxContainer"]
+layout_mode = 2
+text = "Delete selected
+"
+
+[node name="Add new" type="Button" parent="VBoxContainer"]
+layout_mode = 2
+text = "Add new"
+
+[node name="CSGPolygon3D" type="CSGPolygon3D" parent="."]
+mode = 2
+path_node = NodePath("Path3D")
+path_interval_type = 0
+path_interval = 1.0
+path_simplify_angle = 0.0
+path_rotation = 2
+path_local = false
+path_continuous_u = true
+path_u_distance = 1.0
+path_joined = false
+
+[node name="Path3D" type="Path3D" parent="CSGPolygon3D"]
+curve = SubResource("Curve3D_5vkxo")
