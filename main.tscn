@@ -1,9 +1,12 @@
-[gd_scene load_steps=8 format=3 uid="uid://c4l204c7uom0j"]
+[gd_scene load_steps=13 format=3 uid="uid://c4l204c7uom0j"]
 
 [ext_resource type="Script" path="res://main.gd" id="1_1c1sy"]
 [ext_resource type="Script" path="res://addons/editablecurve/EditableCurveInstance.gd" id="2_6bs5a"]
 [ext_resource type="Script" path="res://addons/editablecurve/EditableCurveData.gd" id="3_ij8va"]
 [ext_resource type="PackedScene" uid="uid://c8uwnxobw8xmk" path="res://addons/editablecurve/editable_curve_control_point.tscn" id="4_qj58e"]
+[ext_resource type="Script" path="res://addons/curvestructure/CurveStructureInstance.gd" id="5_c0dv6"]
+[ext_resource type="Script" path="res://addons/curvestructure/CurveData.gd" id="6_kgnii"]
+[ext_resource type="Script" path="res://addons/curvestructure/CurveStructureGeneratorWoodPlankPath.gd" id="6_nwdr1"]
 
 [sub_resource type="Environment" id="Environment_kihj7"]
 
@@ -12,11 +15,27 @@ script = ExtResource("3_ij8va")
 
 [sub_resource type="Curve3D" id="Curve3D_5vkxo"]
 
-[node name="Node3D" type="Node3D" node_paths=PackedStringArray("delete_selected", "add_new_selected", "curve", "path")]
+[sub_resource type="Resource" id="Resource_8ltjl"]
+script = ExtResource("6_kgnii")
+width = 4.0
+
+[sub_resource type="Resource" id="Resource_dh22c"]
+script = ExtResource("6_nwdr1")
+plank_width = 0.5
+plank_height = 0.2
+plank_gap = 0.1
+supports_max_height = 5
+supports_square_size = 0.5
+supports_spacing = 4.0
+
+[node name="Node3D" type="Node3D" node_paths=PackedStringArray("delete_selected", "add_new_selected", "generate_structure", "smooth_button", "curve", "structure", "path")]
 script = ExtResource("1_1c1sy")
 delete_selected = NodePath("VBoxContainer/Delete selected")
 add_new_selected = NodePath("VBoxContainer/Add new")
+generate_structure = NodePath("VBoxContainer/Generate structure")
+smooth_button = NodePath("VBoxContainer/Smooth")
 curve = NodePath("EditableCurve")
+structure = NodePath("CurveStructureInstance")
 path = NodePath("CSGPolygon3D/Path3D")
 
 [node name="Camera3D" type="Camera3D" parent="."]
@@ -46,7 +65,16 @@ text = "Delete selected
 layout_mode = 2
 text = "Add new"
 
+[node name="Generate structure" type="Button" parent="VBoxContainer"]
+layout_mode = 2
+text = "Generate"
+
+[node name="Smooth" type="Button" parent="VBoxContainer"]
+layout_mode = 2
+text = "Smooth"
+
 [node name="CSGPolygon3D" type="CSGPolygon3D" parent="."]
+visible = false
 mode = 2
 path_node = NodePath("Path3D")
 path_interval_type = 0
@@ -60,3 +88,8 @@ path_joined = false
 
 [node name="Path3D" type="Path3D" parent="CSGPolygon3D"]
 curve = SubResource("Curve3D_5vkxo")
+
+[node name="CurveStructureInstance" type="Node3D" parent="."]
+script = ExtResource("5_c0dv6")
+curve_data = SubResource("Resource_8ltjl")
+structure_generator = SubResource("Resource_dh22c")

@@ -17,7 +17,7 @@ config/icon="res://icon.svg"
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/editablecurve/plugin.cfg")
+enabled=PackedStringArray("res://addons/curvestructure/plugin.cfg", "res://addons/editablecurve/plugin.cfg")
 
 [input]
 
