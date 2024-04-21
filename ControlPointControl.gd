@@ -1,0 +1,34 @@
+class_name ControlPointControl extends StaticBody3D
+
+var is_being_dragged := false
+var drag_start_pos := Vector3.ZERO
+var drag_start_normal := Vector3.ZERO
+
+signal drag_start
+signal drag_end
+
+# TODO movement rotation?
+signal movement_translate(amount: Vector3)
+
+func _input(event):
+	# This is not on the _input_event, since the mouse may move outside of the object while dragging.
+	if event.is_action_released("select_control_point") && is_being_dragged:
+		is_being_dragged = false
+		drag_start_pos = Vector3.ZERO
+		drag_start_normal = Vector3.ZERO
+		drag_end.emit()
+	
+	if is_being_dragged:
+		_handle_drag_event(event)
+
+func _input_event(camera, event, position, normal, shape_idx):
+	if event.is_action_pressed("select_control_point"):
+		is_being_dragged = true
+		drag_start_pos = global_position
+		drag_start_normal = camera.project_ray_normal(event.position)
+		drag_start.emit()
+
+# Overwrite in subclass
+# E.g. arrow could be linear, but rotation could be to rotate the object.
+func _handle_drag_event(event):
+	pass

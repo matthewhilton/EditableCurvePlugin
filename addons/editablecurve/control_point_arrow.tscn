@@ -1,0 +1,23 @@
+[gd_scene load_steps=5 format=3 uid="uid://drv0ic15lxsir"]
+
+[ext_resource type="ArrayMesh" uid="uid://d0gv6hashxh7m" path="res://addons/editablecurve/arrow.obj" id="1_rfs31"]
+[ext_resource type="Script" path="res://addons/editablecurve/ControlPointControlArrow.gd" id="1_tqh54"]
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_booum"]
+height = 1.14588
+radius = 0.370922
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_on7mh"]
+albedo_color = Color(0.282353, 0.34902, 1, 1)
+
+[node name="ControlPointControlArrow" type="StaticBody3D"]
+script = ExtResource("1_tqh54")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.100532, 0)
+shape = SubResource("CylinderShape3D_booum")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.04, 0, 0, 0, 0.04, 0, 0, 0, 0.04, 0, -0.5, 0)
+material_override = SubResource("StandardMaterial3D_on7mh")
+mesh = ExtResource("1_rfs31")
