@@ -9,7 +9,8 @@ var context := EditableCurveContext.new()
 
 func _ready():
 	_update_controlpoint_children()
-	
+	data.curve.changed.connect(_on_curve_changed)
+
 func _update_controlpoint_children():
 	for child in get_children():
 		child.queue_free()
@@ -20,13 +21,26 @@ func _update_controlpoint_children():
 func _add_controlpoint_at_index(i: int):
 	var child: EditableCurveControlPoint = control_point_scene.instantiate()
 	child.context = context
-	child.global_position
 	child.moved_while_selected.connect(_update_curve_pos_from_controlpoint_movement)
 	add_child(child)
+	child.global_position
 	_force_realign()
 
+func _on_curve_changed():
+	pass
+
 func _update_curve_pos_from_controlpoint_movement(node: EditableCurveControlPoint):
-	data.curve.set_point_position(node.get_curve_index(), node.global_position)
+	var idx = node.get_curve_index()
+	data.curve.set_point_position(idx, node.global_position)
+	
+	var is_start = idx == 0
+	var is_end = idx == (data.curve.point_count - 1)
+	
+	if !is_end:
+		data.curve.set_point_out(idx, -node.global_basis.z)
+	
+	if !is_start:
+		data.curve.set_point_in(idx, node.global_basis.z)
 
 func add_point_at_end_of_curve(pos: Vector3):
 	data.curve.add_point(pos)
@@ -58,5 +72,9 @@ func _force_realign():
 	
 	for i in range(data.curve.point_count):
 		context.known_points[i].global_position = data.curve.get_point_position(i)
+		var dir = data.curve.get_point_out(i) if i != (data.curve.point_count - 1) else -data.curve.get_point_in(i)
+		
+		if dir != Vector3.ZERO:
+			context.known_points[i].look_at(context.known_points[i].position + dir)
 	
 	context.controls_active = true

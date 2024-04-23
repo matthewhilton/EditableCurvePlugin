@@ -1,7 +1,8 @@
-[gd_scene load_steps=5 format=3 uid="uid://c8uwnxobw8xmk"]
+[gd_scene load_steps=6 format=3 uid="uid://c8uwnxobw8xmk"]
 
 [ext_resource type="Script" path="res://addons/editablecurve/editablecurvecontrolpoint.gd" id="1_ktdrv"]
 [ext_resource type="PackedScene" uid="uid://drv0ic15lxsir" path="res://addons/editablecurve/control_point_arrow.tscn" id="2_6aiu0"]
+[ext_resource type="PackedScene" uid="uid://b0w70ixaledi2" path="res://addons/editablecurve/control_point_rotation.tscn" id="3_1vwna"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_iehrm"]
 size = Vector3(0.5, 0.5, 2)
@@ -11,7 +12,7 @@ size = Vector3(0.5, 0.5, 2)
 
 [node name="EditableCurveControlPoint" type="StaticBody3D" node_paths=PackedStringArray("controls")]
 script = ExtResource("1_ktdrv")
-controls = [NodePath("ControlPointControlArrow"), NodePath("ControlPointControlArrow2"), NodePath("ControlPointControlArrow3"), NodePath("ControlPointControlArrow4"), NodePath("ControlPointControlArrow6"), NodePath("ControlPointControlArrow7")]
+controls = [NodePath("RightArrow"), NodePath("LeftArrow"), NodePath("BackArrow"), NodePath("ForwardArrow"), NodePath("UpArrow"), NodePath("DownArrow"), NodePath("RotationZ"), NodePath("RotationY"), NodePath("RotationX")]
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
 mesh = SubResource("BoxMesh_iehrm")
@@ -19,20 +20,29 @@ mesh = SubResource("BoxMesh_iehrm")
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 shape = SubResource("BoxShape3D_r4jbe")
 
-[node name="ControlPointControlArrow" parent="." instance=ExtResource("2_6aiu0")]
+[node name="RightArrow" parent="." instance=ExtResource("2_6aiu0")]
 transform = Transform3D(-4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0, 0, 1, -1.624, 0, 0)
 
-[node name="ControlPointControlArrow2" parent="." instance=ExtResource("2_6aiu0")]
+[node name="LeftArrow" parent="." instance=ExtResource("2_6aiu0")]
 transform = Transform3D(-4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0, 0, 1, 1.489, 0, 0)
 
-[node name="ControlPointControlArrow3" parent="." instance=ExtResource("2_6aiu0")]
+[node name="BackArrow" parent="." instance=ExtResource("2_6aiu0")]
 transform = Transform3D(1.91069e-15, 4.37114e-08, 1, 1, -4.37114e-08, 0, 4.37114e-08, 1, -4.37114e-08, 0, 0, 1.935)
 
-[node name="ControlPointControlArrow4" parent="." instance=ExtResource("2_6aiu0")]
+[node name="ForwardArrow" parent="." instance=ExtResource("2_6aiu0")]
 transform = Transform3D(1.91069e-15, 4.37114e-08, -1, 1, -4.37114e-08, 0, -4.37114e-08, -1, -4.37114e-08, 0, 0, -1.92628)
 
-[node name="ControlPointControlArrow6" parent="." instance=ExtResource("2_6aiu0")]
+[node name="UpArrow" parent="." instance=ExtResource("2_6aiu0")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.53272, 0)
 
-[node name="ControlPointControlArrow7" parent="." instance=ExtResource("2_6aiu0")]
+[node name="DownArrow" parent="." instance=ExtResource("2_6aiu0")]
 transform = Transform3D(1, 0, 0, 0, -1, 8.74228e-08, 0, -8.74228e-08, -1, 0, -1.24899, 0)
+
+[node name="RotationZ" parent="." instance=ExtResource("3_1vwna")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.774891, 1.50228)
+
+[node name="RotationY" parent="." instance=ExtResource("3_1vwna")]
+transform = Transform3D(-1, 8.74228e-08, -3.82137e-15, 0, -4.37114e-08, -1, -8.74228e-08, -1, 4.37114e-08, 0, 0.75166, -0.567191)
+
+[node name="RotationX" parent="." instance=ExtResource("3_1vwna")]
+transform = Transform3D(1.91069e-15, -7.30144e-30, -1, 4.37114e-08, 1, 1.59578e-37, 1, -4.37114e-08, 1.91069e-15, -1.30509, 0.75166, -0.0486937)

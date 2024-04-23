@@ -1,0 +1,23 @@
+[gd_scene load_steps=5 format=3 uid="uid://b0w70ixaledi2"]
+
+[ext_resource type="ArrayMesh" uid="uid://5choso4pua4b" path="res://addons/editablecurve/rotation_arrow.obj" id="1_bb4gg"]
+[ext_resource type="Script" path="res://addons/editablecurve/control_point_rotation.gd" id="1_ck68t"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_jjc75"]
+albedo_color = Color(0.168627, 1, 0.537255, 1)
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_40lqc"]
+height = 0.282065
+radius = 1.3881
+
+[node name="ControlPointRotation" type="StaticBody3D"]
+script = ExtResource("1_ck68t")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.02, 0, 0, 0, 0.02, 0, 0, 0, 0.02, 0, 0, 0)
+material_override = SubResource("StandardMaterial3D_jjc75")
+mesh = ExtResource("1_bb4gg")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0, 0)
+shape = SubResource("CylinderShape3D_40lqc")

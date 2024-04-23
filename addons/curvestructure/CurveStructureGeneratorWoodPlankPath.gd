@@ -49,8 +49,8 @@ func _get_vertical_supports_mmi(data: CurveData) -> MultiMeshInstance3D:
 		
 		# This aligns the sampled basis vertically. I.e. keeps things horizontal rather than sloping a ton.
 		# Look at the z but at same Y as position, so only vertical poles are produced.
-		var look_at = (-t.basis.z * Vector3(1.0, 0.0, 1.0)).normalized()
-		t.basis = t.basis.looking_at(look_at)
+		#var look_at = (-t.basis.z * Vector3(1.0, 0.0, 1.0)).normalized()
+		#t.basis = t.basis.looking_at(look_at)
 		
 		# TODO read from the plank transforms to get these transforms (plank transforms may be tweaked a lot from the base curve)
 		
@@ -98,7 +98,7 @@ func _get_top_planks_mmi(data: CurveData) -> MultiMeshInstance3D:
 		var t = data.curve.sample_baked_with_rotation(offset, false, false)
 		
 		# This aligns the sampled basis vertically. I.e. keeps things horizontal rather than sloping a ton.
-		t.basis = t.basis.looking_at(-t.basis.z)
+		#t.basis = t.basis.looking_at(-t.basis.z)
 		
 		# TODO tweak the rotation around z basis based on the slope (maybe customisable via data?)
 		

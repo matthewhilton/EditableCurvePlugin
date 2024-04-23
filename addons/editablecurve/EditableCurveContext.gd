@@ -8,5 +8,7 @@ var control_point_selected: EditableCurveControlPoint:
 
 signal selected_control_point_changed
 
+#signal realign_with_curve(curve: Curve3D)
+
 var known_points: Array[EditableCurveControlPoint]
 var controls_active := true

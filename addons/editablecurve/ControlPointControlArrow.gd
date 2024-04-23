@@ -1,10 +1,11 @@
 class_name ControlPointControlArrow extends ControlPointControl
 
-@onready var movement_axis := global_basis.y.normalized()
-
 # Arrows only move linearly in the direction of their global Y basis vector.
 func _get_movement_dir() -> Vector3:
 	return global_basis.y
+
+func _get_face_normal() -> Vector3:
+	return global_basis.x
 
 func _handle_drag_event(event: InputEvent):
 	if !(event is InputEventMouseMotion):
