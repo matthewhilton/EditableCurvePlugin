@@ -11,6 +11,7 @@ height = 0.282065
 radius = 1.3881
 
 [node name="ControlPointRotation" type="StaticBody3D"]
+collision_layer = 2
 script = ExtResource("1_ck68t")
 type = 1
 

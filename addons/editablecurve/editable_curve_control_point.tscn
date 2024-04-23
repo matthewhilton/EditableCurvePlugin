@@ -11,6 +11,7 @@ size = Vector3(0.5, 0.5, 2)
 size = Vector3(0.5, 0.5, 2)
 
 [node name="EditableCurveControlPoint" type="StaticBody3D" node_paths=PackedStringArray("controls")]
+collision_layer = 2
 script = ExtResource("1_ktdrv")
 controls = [NodePath("RightArrow"), NodePath("ForwardArrow"), NodePath("UpArrow"), NodePath("RotationZ"), NodePath("RotationY"), NodePath("RotationX")]
 

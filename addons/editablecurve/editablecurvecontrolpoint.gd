@@ -8,6 +8,8 @@ class_name EditableCurveControlPoint extends StaticBody3D
 
 signal moved_while_selected(n: EditableCurveControlPoint)
 signal mode_changed(to: MODE)
+signal movement_start(n: EditableCurveControlPoint)
+signal movement_end(n: EditableCurveControlPoint)
 
 # Flag used to detect if user clicks outside of control, in order to deselect control.
 var possible_clickout := false
@@ -31,6 +33,8 @@ func _ready():
 		control.movement_translate.connect(_handle_translate)
 		control.movement_rotation.connect(_handle_rotation)
 		control.received_mouse_input.connect(_control_received_mouse_input)
+		control.drag_start.connect(func(): movement_start.emit(self))
+		control.drag_end.connect(func(): movement_end.emit(self))
 	
 	mode_changed.connect(_on_mode_change)
 

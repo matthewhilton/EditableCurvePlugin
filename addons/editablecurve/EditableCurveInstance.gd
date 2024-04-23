@@ -7,9 +7,21 @@ class_name EditableCurveInstance extends Node3D
 # Useful way for all the control points to keep in sync with each other.
 var context := EditableCurveContext.new()
 
+var undo_redo := UndoRedo.new()
+
 func _ready():
 	_update_controlpoint_children()
 	data.curve.changed.connect(_on_curve_changed)
+
+func _input(event):
+	if event.is_action_pressed("ui_undo") && _is_selected():
+		undo_redo.undo()
+	
+	if event.is_action_pressed("ui_redo") && _is_selected():
+		undo_redo.redo()
+
+func _is_selected():
+	return context.control_point_selected != null
 
 func _update_controlpoint_children():
 	for child in get_children():
@@ -22,9 +34,19 @@ func _add_controlpoint_at_index(i: int):
 	var child: EditableCurveControlPoint = control_point_scene.instantiate()
 	child.context = context
 	child.moved_while_selected.connect(_update_curve_pos_from_controlpoint_movement)
+	child.movement_start.connect(_capture_undoredo_start)
+	child.movement_end.connect(_capture_undoredo_end)
 	add_child(child)
 	child.global_position
 	_force_realign()
+
+func _capture_undoredo_start(n: EditableCurveControlPoint):
+	undo_redo.create_action("Control point moved")
+	undo_redo.add_undo_property(n, "global_transform", n.global_transform)
+
+func _capture_undoredo_end(n: EditableCurveControlPoint):
+	undo_redo.add_do_property(n, "global_transform", n.global_transform)
+	undo_redo.commit_action(false)
 
 func _on_curve_changed():
 	pass
