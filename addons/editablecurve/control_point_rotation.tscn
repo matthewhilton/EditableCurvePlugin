@@ -12,6 +12,7 @@ radius = 1.3881
 
 [node name="ControlPointRotation" type="StaticBody3D"]
 script = ExtResource("1_ck68t")
+type = 1
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
 transform = Transform3D(0.02, 0, 0, 0, 0.02, 0, 0, 0, 0.02, 0, 0, 0)

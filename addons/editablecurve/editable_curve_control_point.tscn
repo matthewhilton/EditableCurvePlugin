@@ -12,7 +12,7 @@ size = Vector3(0.5, 0.5, 2)
 
 [node name="EditableCurveControlPoint" type="StaticBody3D" node_paths=PackedStringArray("controls")]
 script = ExtResource("1_ktdrv")
-controls = [NodePath("RightArrow"), NodePath("LeftArrow"), NodePath("BackArrow"), NodePath("ForwardArrow"), NodePath("UpArrow"), NodePath("DownArrow"), NodePath("RotationZ"), NodePath("RotationY"), NodePath("RotationX")]
+controls = [NodePath("RightArrow"), NodePath("ForwardArrow"), NodePath("UpArrow"), NodePath("RotationZ"), NodePath("RotationY"), NodePath("RotationX")]
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
 mesh = SubResource("BoxMesh_iehrm")
@@ -23,20 +23,11 @@ shape = SubResource("BoxShape3D_r4jbe")
 [node name="RightArrow" parent="." instance=ExtResource("2_6aiu0")]
 transform = Transform3D(-4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0, 0, 1, -1.624, 0, 0)
 
-[node name="LeftArrow" parent="." instance=ExtResource("2_6aiu0")]
-transform = Transform3D(-4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0, 0, 1, 1.489, 0, 0)
-
-[node name="BackArrow" parent="." instance=ExtResource("2_6aiu0")]
-transform = Transform3D(1.91069e-15, 4.37114e-08, 1, 1, -4.37114e-08, 0, 4.37114e-08, 1, -4.37114e-08, 0, 0, 1.935)
-
 [node name="ForwardArrow" parent="." instance=ExtResource("2_6aiu0")]
 transform = Transform3D(1.91069e-15, 4.37114e-08, -1, 1, -4.37114e-08, 0, -4.37114e-08, -1, -4.37114e-08, 0, 0, -1.92628)
 
 [node name="UpArrow" parent="." instance=ExtResource("2_6aiu0")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.53272, 0)
-
-[node name="DownArrow" parent="." instance=ExtResource("2_6aiu0")]
-transform = Transform3D(1, 0, 0, 0, -1, 8.74228e-08, 0, -8.74228e-08, -1, 0, -1.24899, 0)
 
 [node name="RotationZ" parent="." instance=ExtResource("3_1vwna")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.774891, 1.50228)

@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3 uid="uid://c4l204c7uom0j"]
+[gd_scene load_steps=18 format=3 uid="uid://c4l204c7uom0j"]
 
 [ext_resource type="Script" path="res://main.gd" id="1_1c1sy"]
 [ext_resource type="Script" path="res://addons/editablecurve/EditableCurveInstance.gd" id="2_6bs5a"]
@@ -7,6 +7,8 @@
 [ext_resource type="Script" path="res://addons/curvestructure/CurveStructureInstance.gd" id="5_c0dv6"]
 [ext_resource type="Script" path="res://addons/curvestructure/CurveData.gd" id="6_kgnii"]
 [ext_resource type="Script" path="res://addons/curvestructure/CurveStructureGeneratorWoodPlankPath.gd" id="6_nwdr1"]
+[ext_resource type="PackedScene" uid="uid://cc1m2a1obsyn4" path="res://addons/fpc/character.tscn" id="8_s58ij"]
+[ext_resource type="Texture2D" uid="uid://bnkebht8urjf3" path="res://icon.svg" id="9_4q8jq"]
 
 [sub_resource type="Environment" id="Environment_kihj7"]
 
@@ -28,6 +30,16 @@ supports_max_height = 5
 supports_square_size = 0.5
 supports_spacing = 4.0
 
+[sub_resource type="WorldBoundaryShape3D" id="WorldBoundaryShape3D_o8aj7"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_k61xo"]
+albedo_texture = ExtResource("9_4q8jq")
+uv1_scale = Vector3(1000, 1000, 1000)
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_cc7ph"]
+material = SubResource("StandardMaterial3D_k61xo")
+size = Vector2(1000, 1000)
+
 [node name="Node3D" type="Node3D" node_paths=PackedStringArray("delete_selected", "add_new_selected", "generate_structure", "smooth_button", "curve", "structure", "path")]
 script = ExtResource("1_1c1sy")
 delete_selected = NodePath("VBoxContainer/Delete selected")
@@ -37,9 +49,6 @@ smooth_button = NodePath("VBoxContainer/Smooth")
 curve = NodePath("EditableCurve")
 structure = NodePath("CurveStructureInstance")
 path = NodePath("CSGPolygon3D/Path3D")
-
-[node name="Camera3D" type="Camera3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 0.984677, 0.174387, 0, -0.174387, 0.984677, 0, 1.05312, 2.19491)
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_kihj7")
@@ -93,3 +102,14 @@ curve = SubResource("Curve3D_5vkxo")
 script = ExtResource("5_c0dv6")
 curve_data = SubResource("Resource_8ltjl")
 structure_generator = SubResource("Resource_dh22c")
+
+[node name="Character" parent="." instance=ExtResource("8_s58ij")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+
+[node name="Floor" type="StaticBody3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Floor"]
+shape = SubResource("WorldBoundaryShape3D_o8aj7")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Floor"]
+mesh = SubResource("PlaneMesh_cc7ph")

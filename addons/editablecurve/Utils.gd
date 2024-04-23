@@ -33,3 +33,8 @@ static func smooth_curve_corners(curve_to_smooth: Curve3D, in_out_scale: float =
 			
 			curve_to_smooth.set_point_in(i, -distance * local_scale)
 			curve_to_smooth.set_point_out(i, +distance * local_scale)
+
+static func loop_next(array: Array, current_val):
+	var current_i = array.find(current_val)
+	var next_i = 0 if current_i >= (array.size() - 1) else current_i + 1
+	return array[next_i]

@@ -7,8 +7,16 @@ class_name EditableCurveControlPoint extends StaticBody3D
 @export var controls: Array[ControlPointControl] = []
 
 signal moved_while_selected(n: EditableCurveControlPoint)
+signal mode_changed(to: MODE)
 
+# Flag used to detect if user clicks outside of control, in order to deselect control.
 var possible_clickout := false
+
+enum MODE { TRANSLATE, ROTATION }
+var mode := MODE.TRANSLATE:
+	set(v):
+		mode = v
+		mode_changed.emit(v)
 
 func _ready():
 	if self not in context.known_points:
@@ -24,12 +32,22 @@ func _ready():
 		control.movement_rotation.connect(_handle_rotation)
 		control.received_mouse_input.connect(_control_received_mouse_input)
 	
+	mode_changed.connect(_on_mode_change)
+
+func _on_mode_change(to: MODE):
+	for control in controls:
+		control.visible = (to == MODE.TRANSLATE && control.type == ControlPointControl.TYPE.LINEAR) || (to == MODE.ROTATION && control.type == ControlPointControl.TYPE.RADIAL)
+
 func _input_event(camera, event, position, normal, shape_idx):
 	if !context.controls_active:
 		return
 	
 	if event.is_action_pressed("select_control_point"):
-		_try_select()
+		_on_select()
+	
+	# Clicked/moused over self, disable click out flag.
+	if event is InputEventMouseButton || event is InputEventMouseMotion:
+		possible_clickout = false
 
 func _input(event):
 	# When this is pressed, we turn on a flag indicating the user could be clicking outside.
@@ -52,10 +70,16 @@ func _is_selectable():
 func _is_selected():
 	return context.control_point_selected == self
 
-func _try_select():
+func _on_select():
+	# Select self.
 	if _is_selectable() && !_is_selected():
 		context.control_point_selected = self
+		_on_mode_change(mode)
 		return
+
+	# Already selected, change modes.
+	elif _is_selected():
+		mode = EditableCurveUtils.loop_next(MODE.values(), mode)
 
 func _notification(what):
 	if !context || !context.controls_active:

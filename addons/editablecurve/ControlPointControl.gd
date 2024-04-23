@@ -13,6 +13,9 @@ signal received_mouse_input
 signal movement_translate(amount: Vector3)
 signal movement_rotation(axis: Vector3, amount_rad: float)
 
+enum TYPE { LINEAR, RADIAL }
+@export var type: TYPE = TYPE.LINEAR
+
 # Overwrite in subclass
 func _get_face_normal() -> Vector3:
 	return Vector3.FORWARD
