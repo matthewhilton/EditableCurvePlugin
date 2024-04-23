@@ -44,7 +44,7 @@ func _get_vertical_supports_mmi(data: CurveData) -> MultiMeshInstance3D:
 	for i in range(num_supports):
 		# Don't sample near the end, since it produces odd results.
 		var offset = min(i * offset_per_support, data.curve.get_baked_length() - 0.2)
-		var t = data.curve.sample_baked_with_rotation(offset, false, false)
+		var t = data.curve.sample_baked_with_rotation(offset, false, true)
 		
 		# This aligns the sampled basis vertically. I.e. keeps things horizontal rather than sloping a ton.
 		# Look at the z but at same Y as position, so only vertical poles are produced.
@@ -94,7 +94,8 @@ func _get_top_planks_mmi(data: CurveData) -> MultiMeshInstance3D:
 		var offset = min(i * offset_per_plank, data.curve.get_baked_length() - 0.2)
 		var structure_width = data.get_width_at_offset(offset)
 	
-		var t = data.curve.sample_baked_with_rotation(offset, false, false)
+		var t = data.curve.sample_baked_with_rotation(offset, false, true)
+		#t.basis = t.basis.rotated(t.basis.z, data.tilt_curve)
 		
 		# This aligns the sampled basis vertically. I.e. keeps things horizontal rather than sloping a ton.
 		#t.basis = t.basis.looking_at(-t.basis.z)

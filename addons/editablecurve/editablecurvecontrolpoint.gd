@@ -37,6 +37,9 @@ func _ready():
 		control.drag_end.connect(func(): movement_end.emit(self))
 	
 	mode_changed.connect(_on_mode_change)
+	
+	# Initial movement end, to trigger re-alignment.
+	movement_end.emit(self)
 
 func _on_mode_change(to: MODE):
 	for control in controls:

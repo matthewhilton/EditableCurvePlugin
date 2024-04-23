@@ -1,3 +1,3 @@
-class_name EditableCurveData extends Resource
+class_name EditableCurve extends Curve3D
 
-var curve := Curve3D.new()
+# TODO add any extra data as needed here.
