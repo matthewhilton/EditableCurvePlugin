@@ -16,7 +16,6 @@ class_name CurveStructureGeneratorWoodPlankPath extends CurveStructureGenerator
 
 func generate(data: CurveData) -> Node3D:
 	if !data.curve:
-		push_error("No curve defined, cannot generate structure")
 		return Node3D.new()
 	
 	var parent = Node3D.new()
