@@ -28,6 +28,7 @@ plank_gap = 0.1
 supports_max_height = 30
 supports_square_size = 0.5
 supports_spacing = 2.0
+crossbeam_support_end_offset = 0.5
 
 [sub_resource type="WorldBoundaryShape3D" id="WorldBoundaryShape3D_o8aj7"]
 

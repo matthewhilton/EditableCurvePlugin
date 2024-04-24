@@ -12,6 +12,9 @@ class_name CurveStructureGeneratorWoodPlankPath extends CurveStructureGenerator
 @export var supports_square_size := 0.5
 @export var supports_spacing := 2.0
 
+@export_category("Crossbeams")
+@export var crossbeam_support_end_offset := 0.5
+
 # TODO horizontal supports.
 
 # TODO crossbeams.
@@ -101,9 +104,13 @@ func _generate_support_beams(data: CurveData, state: PhysicsDirectSpaceState3D):
 		var structure_width = data.get_width_at_offset(offset)
 		var t := data.curve.sample_baked_with_rotation(offset, false, true)
 		
-		# Generate left and right
+		# Generate left and right down posts.
+		var downposts_at_this_offset = []
+		
 		for dir in [-1, 1]:
 			var support = Plank.new()
+			
+			# Rotate basis so +X is the expand direction (up/down)
 			support.basis = t.basis.rotated(t.basis.z, -deg_to_rad(90))
 			support.start = t.origin + (dir * t.basis.x * structure_width / 2.0)
 			
@@ -119,6 +126,25 @@ func _generate_support_beams(data: CurveData, state: PhysicsDirectSpaceState3D):
 			support.depth = supports_square_size
 			support.curve_offset = offset
 			supports_generated.append(support)
+			downposts_at_this_offset.append(support)
+		
+		# If we generated 2 downposts, generate a cross beam.
+		var has_twodownposts = downposts_at_this_offset.size() == 2
+		var downposts_have_enough_length = downposts_at_this_offset.filter(func(d): return d.start.distance_to(d.end) > crossbeam_support_end_offset * 2).size() == 2
+		
+		if has_twodownposts && downposts_have_enough_length:
+			var crossbeam = Plank.new()
+			crossbeam.start = downposts_at_this_offset[0].start - t.basis.y * crossbeam_support_end_offset
+			crossbeam.end = downposts_at_this_offset[1].end + t.basis.y * crossbeam_support_end_offset
+			
+			# Rotate it so it goes diagonally from start -> end
+			var angle = t.basis.x.signed_angle_to(crossbeam.start.direction_to(crossbeam.end), -t.basis.z)
+			crossbeam.basis = t.basis.rotated(-t.basis.z, angle)
+			crossbeam.curve_offset = offset
+			crossbeam.width = supports_square_size
+			crossbeam.depth = supports_square_size
+			supports_generated.append(crossbeam)
+		
 	return supports_generated
 
 func get_ground_height(state: PhysicsDirectSpaceState3D, origin: Vector3, dir: Vector3, max := 30, default = null):
