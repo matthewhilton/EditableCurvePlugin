@@ -11,9 +11,8 @@ var undo_redo := UndoRedo.new()
 signal curve_updated
 
 func _ready():
-	_update_controlpoint_children()
-	curve.changed.connect(_on_curve_changed)
-	
+	_match_controlpoints_to_curve_point_count()
+	curve_updated.connect(_on_curve_updated)
 	undo_redo.version_changed.connect(func(): print("undoredo version changed"))
 
 func _input(event):
@@ -22,122 +21,28 @@ func _input(event):
 	
 	if event.is_action_pressed("ui_redo") && _is_selected():
 		undo_redo.redo()
-	
-	if event.is_action_pressed("ui_delete") && _is_selected():
-		delete_selected_control()
+
+func _capture_undoredo_start():
+	undo_redo.create_action("Edit curve")
+	undo_redo.add_undo_property(self, "curve", curve.duplicate())
+	undo_redo.add_undo_method(func(): curve_updated.emit())
+
+func _capture_undoredo_end():
+	undo_redo.add_do_property(self, "curve", curve.duplicate())
+	undo_redo.add_do_method(func(): curve_updated.emit())
+	undo_redo.commit_action(false)
 
 func _is_selected():
 	return true # If you had multiple you would check here which is active.
 
-func _update_controlpoint_children():
-	for child in get_children():
-		child.queue_free()
-	
-	_realign_controlpoints()
+func add_to_end(t: Transform3D):
+	_capture_undoredo_start()
+	_update_curve_based_on_transform(-1, t)
+	_capture_undoredo_end()
 
-func _add_controlpoint():
-	var child: EditableCurveControlPoint = control_point_scene.instantiate()
-	child.context = context
-	child.moved_while_selected.connect(_update_curve_pos_from_controlpoint_movement)
-	child.movement_start.connect(_capture_undoredo_start)
-	child.movement_end.connect(_capture_undoredo_end)
-	child.movement_end.connect(func(n): curve_updated.emit())
-	add_child(child)
-
-func _capture_undoredo_start(n: EditableCurveControlPoint):
-	# Keep a copy of the curve, not the control point transform property
-	# Because control points are ephemeral and can be created/destroyed easily.
-	# We actually want to keep track of the curve changes, and regenerate the control points based off that.
-	undo_redo.create_action("Control point moved")
-	undo_redo.add_undo_property(self, "curve", curve.duplicate())
-	undo_redo.add_undo_method(_realign_controlpoints)
-
-func _capture_undoredo_end(n: EditableCurveControlPoint):
-	undo_redo.add_do_property(self, "curve", curve.duplicate())
-	undo_redo.add_do_method(_realign_controlpoints)
-	undo_redo.commit_action(false)
-	print("committed control point move action")
-
-func _on_curve_changed():
-	pass
-
-func _update_curve_pos_from_controlpoint_movement(node: EditableCurveControlPoint):
-	var idx = node.get_curve_index()
-	curve.set_point_position(idx, node.global_position)
-	
-	var is_start = idx == 0
-	var is_end = idx == (curve.point_count - 1)
-	
-	if !is_end:
-		var out_scale = node.global_position.distance_to(curve.get_point_position(idx + 1)) / 4.0
-		curve.set_point_out(idx, -node.global_basis.z * out_scale)
-	
-	if !is_start:
-		var in_scale = node.global_position.distance_to(curve.get_point_position(idx - 1)) / 4.0
-		curve.set_point_in(idx, node.global_basis.z * in_scale)
-	
-	if !is_start && !is_end:
-		var angle_tilt = Vector3.UP.signed_angle_to(node.global_basis.y, -node.global_basis.z)
-		print(angle_tilt)
-		curve.set_point_tilt(idx, angle_tilt)
-	
-	if is_start || is_end:
-		curve.set_point_tilt(idx, 0)
-
-func add_point_at_end_of_curve(pos: Vector3):
-	# TODO when adding to end, automatically
-	# make the point look in an appropriate direction
-	_add_point_undoredo(pos)
-	_realign_controlpoints()
-	_set_last_point_basis()
-
-func _set_last_point_basis():
-	if curve.point_count <= 1:
-		return
-	
-	var lastnode = context.known_points[curve.point_count - 1]
-	var secondlastpoint = curve.get_point_position(curve.point_count - 2)
-	
-	lastnode.look_at(secondlastpoint, Vector3.UP, true)
-	
-func _add_point_undoredo(pos: Vector3, index = -1):
-	undo_redo.create_action("Add curve point")
-	undo_redo.add_undo_property(self, "curve", curve.duplicate())
-	undo_redo.add_undo_method(_realign_controlpoints)
-	
-	curve.add_point(pos, Vector3.ZERO, Vector3.ZERO, index)
-	
-	undo_redo.add_do_property(self, "curve", curve.duplicate())
-	undo_redo.add_do_method(_realign_controlpoints)
-	undo_redo.commit_action(false)
-	print("commited add curve point action")
-
-func delete_selected_control():
-	if !context.control_point_selected:
-		return
-	
-	delete_point(context.control_point_selected.get_curve_index())
-	
-func delete_point(i):
-	# TODO undo/redo support.
-	undo_redo.create_action("Delete curve point")
-	undo_redo.add_undo_property(self, "curve", curve.duplicate())
-	undo_redo.add_undo_method(_realign_controlpoints)
-
-	# Remove curve data.
-	curve.remove_point(i)
-	
-	undo_redo.add_do_property(self, "curve", curve.duplicate())
-	undo_redo.add_do_method(_realign_controlpoints)
-	undo_redo.commit_action(false)
-	print("commited delete curve point action")
-	
-	# Remove the controlpoint.
-	var p = context.known_points[i]
-	p.queue_free()
-	context.known_points.remove_at(i)
-	
-func _realign_controlpoints():
+# Ensure we have a control point for each curve point.
+# Delete any extras, or add any missing.
+func _match_controlpoints_to_curve_point_count():
 	# Adjust the count based on the curve count.
 	var diff = curve.point_count - context.known_points.size()
 
@@ -150,20 +55,69 @@ func _realign_controlpoints():
 	# Add.
 	if diff > 0:
 		for i in range(diff):
-			_add_controlpoint()
+			var child: EditableCurveControlPoint = control_point_scene.instantiate()
+			context.known_points.append(child)
+			child.context = context
+			child.movement_start.connect(_capture_undoredo_start)
+			child.movement_update.connect(_handle_controlpoint_movement_update)
+			child.movement_end.connect(_capture_undoredo_end)
+			add_child(child)
+
+func _handle_controlpoint_movement_update(n: EditableCurveControlPoint, t: Transform3D):
+	var idx = n.get_curve_index()
+	_update_curve_based_on_transform(idx, t)
+
+func _update_curve_based_on_transform(idx: int, t: Transform3D):
+	# Extend curve if given -1
+	if idx == -1:
+		curve.add_point(t.origin)
+		idx = curve.point_count - 1
 	
-	# Force all nodes to re-align, without emitting any movement signal.
-	_force_realign()
+	curve.set_point_position(idx, t.origin)
+	
+	var is_start = idx == 0
+	var is_end = idx == (curve.point_count - 1)
+	
+	if !is_start:
+		curve.set_point_in(idx, t.basis.z) # Back
+	
+	if !is_start:
+		curve.set_point_out(idx, -t.basis.z) # Front
+	
+	var ref = Plane(t.basis.z).project(Vector3.UP).normalized()
+	var tilt = ref.signed_angle_to(t.basis.y, -t.basis.z)
+	curve.set_point_tilt(idx, tilt)
+	
+	# TODO in/out scale based on distance to/from previous ?
+
 	curve_updated.emit()
 
-func _force_realign():
-	# Disable controls (and associated signals) during realignment.
-	context.controls_active = false
-	
+func _on_curve_updated():
+	_match_controlpoints_to_curve_point_count()
+	_align_controlpoints_to_curve()
+
+func _align_controlpoints_to_curve():
 	for i in range(curve.point_count):
-		context.known_points[i].global_position = curve.get_point_position(i)
-		var dir = curve.get_point_out(i).normalized() if i != (curve.point_count - 1) else -curve.get_point_in(i).normalized()
+		var n: EditableCurveControlPoint = context.known_points[i]
 		
-		# TODO realign rotation and tilt
-	
-	context.controls_active = true
+		# Note - we do NOT use sample_baked_with_rotation here
+		# Because the values this produces are != what is actually set at that exact index.
+		# We want to basically recreate what the curve data is at this index (in,out,pos,tilt)
+		
+		n.global_position = curve.get_point_position(i)
+		
+		var is_end = i == (curve.point_count - 1)
+		if !is_end:
+			# Look at out forwards.
+			var out = curve.get_point_out(i)
+			
+			if out != Vector3.ZERO:
+				var look_at_up_vector = Vector3.UP.rotated(out, curve.get_point_tilt(i))
+				n.look_at(n.global_position + out, look_at_up_vector)
+		else:
+			# If end, look at in backwards.
+			var in_dir = curve.get_point_in(i)
+			
+			if in_dir != Vector3.ZERO:
+				var look_at_up_vector = Vector3.UP.rotated(in_dir, -curve.get_point_tilt(i))
+				n.look_at(n.global_position + in_dir, look_at_up_vector, true)

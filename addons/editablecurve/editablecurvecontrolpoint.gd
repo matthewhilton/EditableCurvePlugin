@@ -6,10 +6,11 @@ class_name EditableCurveControlPoint extends StaticBody3D
 # All controls, for linking signals to.
 @export var controls: Array[ControlPointControl] = []
 
-signal moved_while_selected(n: EditableCurveControlPoint)
 signal mode_changed(to: MODE)
-signal movement_start(n: EditableCurveControlPoint)
-signal movement_end(n: EditableCurveControlPoint)
+
+signal movement_start
+signal movement_update(n: EditableCurveControlPoint, t: Transform3D)
+signal movement_end
 
 # Flag used to detect if user clicks outside of control, in order to deselect control.
 var possible_clickout := false
@@ -23,8 +24,6 @@ var mode := MODE.TRANSLATE:
 func _ready():
 	if self not in context.known_points:
 		context.known_points.append(self)
-	
-	set_notify_transform(true)
 
 	context.selected_control_point_changed.connect(_update_control_visibility)
 	_update_control_visibility()
@@ -33,13 +32,10 @@ func _ready():
 		control.movement_translate.connect(_handle_translate)
 		control.movement_rotation.connect(_handle_rotation)
 		control.received_mouse_input.connect(_control_received_mouse_input)
-		control.drag_start.connect(func(): movement_start.emit(self))
-		control.drag_end.connect(func(): movement_end.emit(self))
+		control.drag_start.connect(func(): movement_start.emit())
+		control.drag_end.connect(func(): movement_end.emit())
 	
 	mode_changed.connect(_on_mode_change)
-	
-	# Initial movement end, to trigger re-alignment.
-	movement_end.emit(self)
 
 func _on_mode_change(to: MODE):
 	for control in controls:
@@ -88,22 +84,19 @@ func _on_select():
 	elif _is_selected():
 		mode = EditableCurveUtils.loop_next(MODE.values(), mode)
 
-func _notification(what):
-	if !context || !context.controls_active:
-		return
-	
-	if what == NOTIFICATION_TRANSFORM_CHANGED && _is_selected():
-		moved_while_selected.emit(self)
-
 func _update_control_visibility():
 	for control in controls:
 		control.visible = _is_selected()
 
 func _handle_rotation(axis: Vector3, angle_rad: float):
-	global_basis = global_basis.rotated(axis.normalized(), angle_rad)
+	var t = global_transform
+	t.basis = t.basis.rotated(axis.normalized(), angle_rad)
+	movement_update.emit(self, t)
 
 func _handle_translate(movement: Vector3):
-	global_position += movement
+	var t = global_transform
+	t.origin += movement
+	movement_update.emit(self, t)
 
 func get_curve_index() -> int:
 	return context.known_points.find(self)

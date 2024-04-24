@@ -34,7 +34,7 @@ func _get_vertical_supports_mmi(data: CurveData) -> MultiMeshInstance3D:
 	# Avoid fencepost problem by removing 1 to count gaps not posts.
 	var offset_per_support = data.curve.get_baked_length() / (num_supports - 1)
 	
-	print("[Gen] ", num_supports, " supports")
+	#print("[Gen] ", num_supports, " supports")
 	
 	var multimesh = MultiMesh.new()
 	multimesh.mesh = BoxMesh.new()
