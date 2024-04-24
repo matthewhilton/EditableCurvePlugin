@@ -13,7 +13,6 @@ signal curve_updated
 func _ready():
 	_match_controlpoints_to_curve_point_count()
 	curve_updated.connect(_on_curve_updated)
-	undo_redo.version_changed.connect(func(): print("undoredo version changed"))
 
 func _input(event):
 	if event.is_action_pressed("ui_undo") && _is_selected():
@@ -25,17 +24,26 @@ func _input(event):
 func _capture_undoredo_start():
 	undo_redo.create_action("Edit curve")
 	undo_redo.add_undo_property(self, "curve", curve.duplicate())
-	undo_redo.add_undo_method(func(): curve_updated.emit())
+	undo_redo.add_undo_method(_on_undoredo_executed)
 
 func _capture_undoredo_end():
 	undo_redo.add_do_property(self, "curve", curve.duplicate())
-	undo_redo.add_do_method(func(): curve_updated.emit())
+	undo_redo.add_do_method(_on_undoredo_executed)
 	undo_redo.commit_action(false)
+
+# After undo/redo, the curve is reset back to previous state
+# So emit curve_updated to let all listeners know it changed.
+# This will also re-align the control points.
+func _on_undoredo_executed():
+	curve_updated.emit()
 
 func _is_selected():
 	return true # If you had multiple you would check here which is active.
 
-func add_to_end(t: Transform3D):
+func add_to_end(t: Transform3D, autoalign := false):
+	if autoalign:
+		t = align_basis_to_end_of_curve(t)
+
 	_capture_undoredo_start()
 	_update_curve_based_on_transform(-1, t)
 	_capture_undoredo_end()
@@ -66,6 +74,17 @@ func _match_controlpoints_to_curve_point_count():
 func _handle_controlpoint_movement_update(n: EditableCurveControlPoint, t: Transform3D):
 	var idx = n.get_curve_index()
 	_update_curve_based_on_transform(idx, t)
+
+# Usually when adding a point to the end of the curve
+# its nice to have the basis aligned in some logicaly way
+func align_basis_to_end_of_curve(t: Transform3D) -> Transform3D:
+	# Nothing to align to
+	if curve.point_count == 0:
+		return t
+	
+	var last_point_pos = curve.get_point_position(curve.point_count - 1)
+	t = t.looking_at(last_point_pos, Vector3.UP, true) # Invert because looking backwards.
+	return t
 
 func _update_curve_based_on_transform(idx: int, t: Transform3D):
 	# Extend curve if given -1

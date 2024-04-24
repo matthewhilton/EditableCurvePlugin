@@ -20,5 +20,6 @@ func _regenerate():
 func _add_new_selected():
 	var cam: Camera3D = get_viewport().get_camera_3d()
 	var pos = cam.global_position - cam.global_basis.z * 5.0
+	# Check the direction from the previous to get the basis.
 	var t = Transform3D(Basis(), pos)
-	curve.add_to_end(t)
+	curve.add_to_end(t, true)

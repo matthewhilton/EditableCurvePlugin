@@ -14,4 +14,4 @@ func regenerate():
 		push_error("No curve data or structure generator defined")
 		return
 		
-	add_child(structure_generator.generate(curve_data))
+	add_child(structure_generator.generate(curve_data, get_world_3d().direct_space_state))
