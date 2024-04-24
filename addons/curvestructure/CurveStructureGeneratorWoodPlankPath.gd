@@ -4,17 +4,37 @@ class_name CurveStructureGeneratorWoodPlankPath extends CurveStructureGenerator
 
 @export_category("Planks")
 @export var plank_width := 0.5
-@export var plank_height := 0.2
+@export var plank_depth := 0.2
 @export var plank_gap := 0.1
 
 @export_category("Vertical supports")
-@export var supports_max_height := 10 # TODO limit these via raycast to ground.
+@export var supports_max_height := 30
 @export var supports_square_size := 0.5
-@export var supports_spacing := 4.0
+@export var supports_spacing := 2.0
 
 # TODO horizontal supports.
 
 # TODO crossbeams.
+
+class Plank:
+	var start: Vector3
+	var end: Vector3
+	var basis: Basis
+	var depth := 0.2
+	var width := 0.5
+	var curve_offset := 0.0
+	
+	func to_transform3d():
+		var t = Transform3D()
+		t.basis = basis
+	
+		t.basis.x = t.basis.x.normalized() * start.distance_to(end)
+		t.basis.y = t.basis.y.normalized() * depth
+		t.basis.z = t.basis.z.normalized() * width
+		
+		t.origin = (start + end) / 2.0
+		
+		return t
 
 func generate(data: CurveData, state: PhysicsDirectSpaceState3D) -> Node3D:
 	if !data.curve:
@@ -22,86 +42,86 @@ func generate(data: CurveData, state: PhysicsDirectSpaceState3D) -> Node3D:
 	
 	var parent = Node3D.new()
 	
-	# Top planks.
-	parent.add_child(_get_top_planks_mmi(data))
+	var planks: Array[Plank] = _generate_top_planks(data)
+	parent.add_child(_bake_objects_to_mmi(planks))
 	
-	# Vertical supports.
-	parent.add_child(_get_vertical_supports_mmi(data, state))
+	var support_beams: Array[Plank] = _generate_support_beams(data, state)
+	parent.add_child(_bake_objects_to_mmi(support_beams))
 	
 	return parent
 
-func _get_vertical_supports_mmi(data: CurveData, state: PhysicsDirectSpaceState3D) -> MultiMeshInstance3D:
-	var num_supports = ceil(data.curve.get_baked_length() / (supports_square_size + supports_spacing)) # Add two for final posts.
-	
-	# Avoid fencepost problem by removing 1 to count gaps not posts.
-	var offset_per_support = data.curve.get_baked_length() / (num_supports - 1)
-	
+func _bake_objects_to_mmi(objects: Array):
 	var multimesh = MultiMesh.new()
 	multimesh.mesh = BoxMesh.new()
 	multimesh.transform_format = MultiMesh.TRANSFORM_3D
-	multimesh.instance_count = num_supports * 2 # One support on either side.
+	multimesh.instance_count = objects.size()
 	
-	for i in range(num_supports):
-		# Don't sample near the end, since it produces odd results.
-		var offset = min(i * offset_per_support, data.curve.get_baked_length() - 0.2)
-		var t = data.curve.sample_baked_with_rotation(offset, false, true)
-		var width = data.get_width_at_offset(offset)
-		
-		# Scale horizontally
-		t.basis.x *= supports_square_size
-		t.basis.z *= supports_square_size
-		
-		# Left side.
-		var left_top = t.translated(t.basis.x.normalized() * width / 2.0)
-		var left_height = get_ground_height(state, left_top.origin, -left_top.basis.y, supports_max_height)
-		left_top.basis.y *= left_height
-		var left_center = left_top.translated(-left_top.basis.y.normalized() * left_height / 2.0)
-		
-		# Right side.
-		var right_top = t.translated(-t.basis.x.normalized() * width / 2.0)
-		var right_height = get_ground_height(state, right_top.origin, -right_top.basis.y, supports_max_height)
-		right_top.basis.y *= right_height
-		var right_center = right_top.translated(-right_top.basis.y.normalized() * left_height / 2.0)
-		
-		# TODO make this reusable, and also make it flip around if upside down ?
-		
-		multimesh.set_instance_transform(i, left_center)
-		multimesh.set_instance_transform(i + num_supports, right_center)
+	for i in range(objects.size()):
+		multimesh.set_instance_transform(i, objects[i].to_transform3d())
 	
-	var mmi = MultiMeshInstance3D.new()
+	var mmi := MultiMeshInstance3D.new()
 	mmi.multimesh = multimesh
 	return mmi
 	
-func _get_top_planks_mmi(data: CurveData) -> MultiMeshInstance3D:
+func _generate_top_planks(data: CurveData):
 	# First calculate the number of planks.
 	var num_planks = ceil(data.curve.get_baked_length() / (plank_width + plank_gap))
 	
 	# Avoid fencepost problem by removing 1 to count gaps not posts.
 	var offset_per_plank = data.curve.get_baked_length() / (num_planks - 1)
 	
-	# Make wood plank path with multimesh.
-	var multimesh = MultiMesh.new()
-	multimesh.mesh = BoxMesh.new()
-	multimesh.transform_format = MultiMesh.TRANSFORM_3D
-	multimesh.instance_count = num_planks
-	
+	var planks_generated: Array[Plank] = []
 	for i in range(num_planks):
 		# Don't sample near the end, since it produces odd results.
 		var offset = min(i * offset_per_plank, data.curve.get_baked_length() - 0.2)
 		var structure_width = data.get_width_at_offset(offset)
-	
-		var t = data.curve.sample_baked_with_rotation(offset, false, true)
+		var t := data.curve.sample_baked_with_rotation(offset, false, true)
 		
-		t.basis.x *= structure_width
-		t.basis.z *= plank_width
-		t.basis.y *= plank_height
-		multimesh.set_instance_transform(i, t)
+		var plank = Plank.new()
+		plank.basis = t.basis
+		plank.start = t.translated(t.basis.x * structure_width / 2.0).origin
+		plank.end = t.translated(-t.basis.x * structure_width / 2.0).origin
+		plank.width = plank_width
+		plank.depth = plank_depth
+		plank.curve_offset = offset
+		planks_generated.append(plank)
 	
-	var mmi = MultiMeshInstance3D.new()
-	mmi.multimesh = multimesh
-	return mmi
+	return planks_generated
 
-func get_ground_height(state: PhysicsDirectSpaceState3D, origin: Vector3, dir: Vector3, max := 100, default := 10):
+func _generate_support_beams(data: CurveData, state: PhysicsDirectSpaceState3D):
+	var num_supports = ceil(data.curve.get_baked_length() / (supports_square_size + supports_spacing)) # Add two for final posts.
+	
+	# Avoid fencepost problem by removing 1 to count gaps not posts.
+	var offset_per_support = data.curve.get_baked_length() / (num_supports - 1)
+	
+	var supports_generated: Array[Plank] = []
+	for i in range(num_supports):
+		# Don't sample near the end, since it produces odd results.
+		var offset = min(i * offset_per_support, data.curve.get_baked_length() - 0.2)
+		var structure_width = data.get_width_at_offset(offset)
+		var t := data.curve.sample_baked_with_rotation(offset, false, true)
+		
+		# Generate left and right
+		for dir in [-1, 1]:
+			var support = Plank.new()
+			support.basis = t.basis.rotated(t.basis.z, -deg_to_rad(90))
+			support.start = t.origin + (dir * t.basis.x * structure_width / 2.0)
+			
+			# Raycast to get ground.
+			var support_height = get_ground_height(state, support.start, -t.basis.y, supports_max_height)
+			
+			# No raycast hit or is tiny, ignore.
+			if support_height == null || support_height < 0.1:
+				continue
+			
+			support.end = support.start + (-t.basis.y * support_height)
+			support.width = supports_square_size
+			support.depth = supports_square_size
+			support.curve_offset = offset
+			supports_generated.append(support)
+	return supports_generated
+
+func get_ground_height(state: PhysicsDirectSpaceState3D, origin: Vector3, dir: Vector3, max := 30, default = null):
 	var query = PhysicsRayQueryParameters3D.create(origin, origin + dir * max, ground_raycast_mask)
 	var result = state.intersect_ray(query)
 	

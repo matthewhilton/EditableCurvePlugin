@@ -8,7 +8,7 @@ extends Node3D
 @export var path: Path3D
 
 func _ready():
-	delete_selected.pressed.connect(func(): curve.delete_selected_control())
+	#delete_selected.pressed.connect(func(): curve.delete_selected_control())
 	add_new_selected.pressed.connect(_add_new_selected)
 	curve.curve_updated.connect(func(): _regenerate())
 	generate_structure.pressed.connect(func(): _regenerate())

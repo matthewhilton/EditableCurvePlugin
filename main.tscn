@@ -23,11 +23,11 @@ width = 4.0
 script = ExtResource("6_nwdr1")
 ground_raycast_mask = 1
 plank_width = 0.5
-plank_height = 0.2
+plank_depth = 0.2
 plank_gap = 0.1
-supports_max_height = 10
+supports_max_height = 30
 supports_square_size = 0.5
-supports_spacing = 4.0
+supports_spacing = 2.0
 
 [sub_resource type="WorldBoundaryShape3D" id="WorldBoundaryShape3D_o8aj7"]
 
