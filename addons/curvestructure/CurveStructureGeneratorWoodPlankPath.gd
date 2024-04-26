@@ -134,8 +134,13 @@ func _generate_support_beams(data: CurveData, state: PhysicsDirectSpaceState3D):
 		
 		if has_twodownposts && downposts_have_enough_length:
 			var crossbeam = Plank.new()
-			crossbeam.start = downposts_at_this_offset[0].start - t.basis.y * crossbeam_support_end_offset
-			crossbeam.end = downposts_at_this_offset[1].end + t.basis.y * crossbeam_support_end_offset
+			
+			# Alternate which is the start and end
+			var start_downpost_idx = int(i % 2 == 0)
+			var end_downpost_idx = abs(start_downpost_idx - 1)
+			
+			crossbeam.start = downposts_at_this_offset[start_downpost_idx].start - t.basis.y * crossbeam_support_end_offset
+			crossbeam.end = downposts_at_this_offset[end_downpost_idx].end + t.basis.y * crossbeam_support_end_offset
 			
 			# Rotate it so it goes diagonally from start -> end
 			var angle = t.basis.x.signed_angle_to(crossbeam.start.direction_to(crossbeam.end), -t.basis.z)

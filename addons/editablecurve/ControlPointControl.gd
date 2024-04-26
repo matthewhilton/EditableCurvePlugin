@@ -10,10 +10,11 @@ signal drag_start
 signal drag_end
 signal received_mouse_input
 
+signal movement_scale(amount: Vector3)
 signal movement_translate(amount: Vector3)
 signal movement_rotation(axis: Vector3, amount_rad: float)
 
-enum TYPE { LINEAR, RADIAL }
+enum TYPE { LINEAR, RADIAL, SCALE }
 @export var type: TYPE = TYPE.LINEAR
 
 # Overwrite in subclass

@@ -38,3 +38,14 @@ static func loop_next(array: Array, current_val):
 	var current_i = array.find(current_val)
 	var next_i = 0 if current_i >= (array.size() - 1) else current_i + 1
 	return array[next_i]
+
+static func get_index_to_insert_pos_after(curve: Curve3D, to: Vector3) -> int:
+	var target_offset := curve.get_closest_offset(to)
+	
+	for i in range(curve.point_count):
+		var this_offset = curve.get_closest_offset(curve.get_point_position(i))
+		
+		if this_offset > target_offset:
+			return i
+	
+	return -1

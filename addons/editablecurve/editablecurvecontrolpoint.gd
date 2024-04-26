@@ -9,17 +9,24 @@ class_name EditableCurveControlPoint extends StaticBody3D
 signal mode_changed(to: MODE)
 
 signal movement_start
+signal scale_update(n: EditableCurveControlPoint, s: Vector3)
 signal movement_update(n: EditableCurveControlPoint, t: Transform3D)
 signal movement_end
 
 # Flag used to detect if user clicks outside of control, in order to deselect control.
 var possible_clickout := false
 
-enum MODE { TRANSLATE, ROTATION }
+enum MODE { TRANSLATE, ROTATION, SIZE }
 var mode := MODE.TRANSLATE:
 	set(v):
 		mode = v
 		mode_changed.emit(v)
+
+const mode_mappings = {
+	MODE.TRANSLATE: [ControlPointControl.TYPE.LINEAR],
+	MODE.ROTATION: [ControlPointControl.TYPE.RADIAL],
+	MODE.SIZE: [ControlPointControl.TYPE.SCALE],
+}
 
 func _ready():
 	if self not in context.known_points:
@@ -30,6 +37,7 @@ func _ready():
 	
 	for control in controls:
 		control.movement_translate.connect(_handle_translate)
+		control.movement_scale.connect(_handle_scale)
 		control.movement_rotation.connect(_handle_rotation)
 		control.received_mouse_input.connect(_control_received_mouse_input)
 		control.drag_start.connect(func(): movement_start.emit())
@@ -39,7 +47,7 @@ func _ready():
 
 func _on_mode_change(to: MODE):
 	for control in controls:
-		control.visible = (to == MODE.TRANSLATE && control.type == ControlPointControl.TYPE.LINEAR) || (to == MODE.ROTATION && control.type == ControlPointControl.TYPE.RADIAL)
+		control.visible = control.type in mode_mappings.get(to, [])
 
 func _input_event(camera, event, position, normal, shape_idx):
 	if !context.controls_active:
@@ -88,6 +96,9 @@ func _update_control_visibility():
 	for control in controls:
 		control.visible = _is_selected()
 
+func _handle_scale(scale_value: Vector3):
+	scale_update.emit(self, scale_value)
+	
 func _handle_rotation(axis: Vector3, angle_rad: float):
 	var t = global_transform
 	t.basis = t.basis.rotated(axis.normalized(), angle_rad)
