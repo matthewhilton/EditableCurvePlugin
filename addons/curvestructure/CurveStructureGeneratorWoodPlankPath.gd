@@ -77,7 +77,7 @@ func _generate_top_planks(data: EditableCurveData):
 	for i in range(num_planks):
 		# Don't sample near the end, since it produces odd results.
 		var offset = min(i * offset_per_plank, data.get_baked_length() - 0.2)
-		var structure_width = data.sample_scale_at_offset(offset).x
+		var structure_width = data.sample_width_at_offset(offset)
 		var t := data.sample_baked_with_rotation(offset, false, true)
 		
 		var plank = Plank.new()
@@ -101,7 +101,7 @@ func _generate_support_beams(data: EditableCurveData, state: PhysicsDirectSpaceS
 	for i in range(num_supports):
 		# Don't sample near the end, since it produces odd results.
 		var offset = min(i * offset_per_support, data.get_baked_length() - 0.2)
-		var structure_width = data.sample_scale_at_offset(offset).x
+		var structure_width = data.sample_width_at_offset(offset)
 		var t := data.sample_baked_with_rotation(offset, false, true)
 		
 		# Generate left and right down posts.

@@ -165,7 +165,8 @@ func _update_curve(idx: int, point_data: CurvePointData):
 	var tilt = ref.signed_angle_to(t.basis.y.normalized(), -t.basis.z.normalized())
 	data.set_point_tilt(idx, tilt)
 	
-	# TODO store width.
+	# Store width (axis scale X)
+	data.set_point_width(idx, point_data.axis_scale.x)
 
 	curve_updated.emit()
 
@@ -208,8 +209,11 @@ func get_axis_scale_for_n(n: EditableCurveControlPoint) -> Vector3:
 		if in_dir != Vector3.ZERO:
 			axis_scale.z = max(in_dir.length(), 1)
 	
-	# X scale is the width
-	# TODO.
+	# X scale is the width, which we can sample directly.
+	axis_scale.x = data.get_point_width(i)
+	
+	# Y scale is unused.
+
 	return axis_scale
 	
 func get_transform_for_n(n: EditableCurveControlPoint) -> Transform3D:
