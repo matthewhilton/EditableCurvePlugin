@@ -39,8 +39,8 @@ class Plank:
 		
 		return t
 
-func generate(data: CurveData, state: PhysicsDirectSpaceState3D) -> Node3D:
-	if !data.curve:
+func generate(data: EditableCurveData, state: PhysicsDirectSpaceState3D) -> Node3D:
+	if !data:
 		return Node3D.new()
 	
 	var parent = Node3D.new()
@@ -66,19 +66,19 @@ func _bake_objects_to_mmi(objects: Array):
 	mmi.multimesh = multimesh
 	return mmi
 	
-func _generate_top_planks(data: CurveData):
+func _generate_top_planks(data: EditableCurveData):
 	# First calculate the number of planks.
-	var num_planks = ceil(data.curve.get_baked_length() / (plank_width + plank_gap))
+	var num_planks = ceil(data.get_baked_length() / (plank_width + plank_gap))
 	
 	# Avoid fencepost problem by removing 1 to count gaps not posts.
-	var offset_per_plank = data.curve.get_baked_length() / (num_planks - 1)
+	var offset_per_plank = data.get_baked_length() / (num_planks - 1)
 	
 	var planks_generated: Array[Plank] = []
 	for i in range(num_planks):
 		# Don't sample near the end, since it produces odd results.
-		var offset = min(i * offset_per_plank, data.curve.get_baked_length() - 0.2)
-		var structure_width = data.get_width_at_offset(offset)
-		var t := data.curve.sample_baked_with_rotation(offset, false, true)
+		var offset = min(i * offset_per_plank, data.get_baked_length() - 0.2)
+		var structure_width = data.sample_scale_at_offset(offset).x
+		var t := data.sample_baked_with_rotation(offset, false, true)
 		
 		var plank = Plank.new()
 		plank.basis = t.basis
@@ -91,18 +91,18 @@ func _generate_top_planks(data: CurveData):
 	
 	return planks_generated
 
-func _generate_support_beams(data: CurveData, state: PhysicsDirectSpaceState3D):
-	var num_supports = ceil(data.curve.get_baked_length() / (supports_square_size + supports_spacing)) # Add two for final posts.
+func _generate_support_beams(data: EditableCurveData, state: PhysicsDirectSpaceState3D):
+	var num_supports = ceil(data.get_baked_length() / (supports_square_size + supports_spacing)) # Add two for final posts.
 	
 	# Avoid fencepost problem by removing 1 to count gaps not posts.
-	var offset_per_support = data.curve.get_baked_length() / (num_supports - 1)
+	var offset_per_support = data.get_baked_length() / (num_supports - 1)
 	
 	var supports_generated: Array[Plank] = []
 	for i in range(num_supports):
 		# Don't sample near the end, since it produces odd results.
-		var offset = min(i * offset_per_support, data.curve.get_baked_length() - 0.2)
-		var structure_width = data.get_width_at_offset(offset)
-		var t := data.curve.sample_baked_with_rotation(offset, false, true)
+		var offset = min(i * offset_per_support, data.get_baked_length() - 0.2)
+		var structure_width = data.sample_scale_at_offset(offset).x
+		var t := data.sample_baked_with_rotation(offset, false, true)
 		
 		# Generate left and right down posts.
 		var downposts_at_this_offset = []

@@ -1,10 +1,9 @@
 class_name EditableCurveInstance extends Node3D
 
 # The actual data about the curve, e.g. curve itself, any other metadata, etc...
-@export var curve: Curve3D:
+@export var data: EditableCurveData:
 	set(v):
-		curve = v
-		print("[EditableCurveInstance] Curve changed, now has ", curve.point_count if curve else 0, " points")
+		data = v
 		curve_updated.emit()
 		
 @export var control_point_scene: PackedScene
@@ -30,12 +29,12 @@ func _input(event):
 		undo_redo.redo()
 
 func _capture_undoredo_start():
-	undo_redo.create_action("Edit curve")
-	undo_redo.add_undo_property(self, "curve", curve.duplicate())
+	undo_redo.create_action("Edit curve data")
+	undo_redo.add_undo_property(self, "data", data.duplicate())
 	undo_redo.add_undo_method(_on_undoredo_executed)
 
 func _capture_undoredo_end():
-	undo_redo.add_do_property(self, "curve", curve.duplicate())
+	undo_redo.add_do_property(self, "data", data.duplicate())
 	undo_redo.add_do_method(_on_undoredo_executed)
 	undo_redo.commit_action(false)
 
@@ -57,7 +56,7 @@ func remove_selected_control():
 	if idx == -1:
 		return
 	
-	curve.remove_point(idx)
+	data.remove_point(idx)
 	curve_updated.emit()
 
 func add_point_in_middle(t: Transform3D, autoalign := false):
@@ -65,7 +64,7 @@ func add_point_in_middle(t: Transform3D, autoalign := false):
 	_capture_undoredo_start()
 	
 	# Add this point at the given index, then update it as normal.
-	var idx = EditableCurveUtils.get_index_to_insert_pos_after(curve, t.origin)
+	var idx = EditableCurveUtils.get_index_to_insert_pos_after(data.get_internal_curve(), t.origin)
 
 	if idx == -1:
 		return
@@ -74,7 +73,7 @@ func add_point_in_middle(t: Transform3D, autoalign := false):
 	if autoalign:
 		t = get_transform_between(idx - 1, idx)
 
-	curve.add_point(t.origin, Vector3.ZERO, Vector3.ZERO, idx)
+	data.add_point(t.origin, Vector3.ZERO, Vector3.ZERO, idx)
 	_update_curve_based_on_transform(idx, t)
 
 	_capture_undoredo_end()
@@ -90,7 +89,7 @@ func add_to_end(t: Transform3D, autoalign := false):
 # Ensure we have a control point for each curve point.
 # Delete any extras, or add any missing.
 func _match_controlpoints_to_curve_point_count():
-	if !curve:
+	if !data:
 		# No curve - clear all.
 		while !context.known_points.is_empty():
 			var n = context.known_points.pop_back()
@@ -98,7 +97,7 @@ func _match_controlpoints_to_curve_point_count():
 		return
 
 	# Adjust the count based on the curve count.
-	var diff = curve.point_count - context.known_points.size()
+	var diff = data.point_count - context.known_points.size()
 
 	# Remove
 	if diff < 0:
@@ -114,8 +113,13 @@ func _match_controlpoints_to_curve_point_count():
 			child.context = context
 			child.movement_start.connect(_capture_undoredo_start)
 			child.movement_update.connect(_handle_controlpoint_movement_update)
+			child.scale_update.connect(_handle_controlpoint_scale_update)
 			child.movement_end.connect(_capture_undoredo_end)
 			add_child(child)
+
+func _handle_controlpoint_scale_update(n: EditableCurveControlPoint, s: Vector3):
+	var idx = n.get_curve_index()
+	_update_curve_based_on_scale(idx, s)
 
 func _handle_controlpoint_movement_update(n: EditableCurveControlPoint, t: Transform3D):
 	var idx = n.get_curve_index()
@@ -125,41 +129,43 @@ func _handle_controlpoint_movement_update(n: EditableCurveControlPoint, t: Trans
 # its nice to have the basis aligned in some logicaly way
 func align_basis_to_end_of_curve(t: Transform3D) -> Transform3D:
 	# Nothing to align to
-	if curve.point_count == 0:
+	if data.point_count == 0:
 		return t
 	
-	var last_point_pos = curve.get_point_position(curve.point_count - 1)
+	var last_point_pos = data.get_point_position(data.point_count - 1)
 	t = t.looking_at(last_point_pos, Vector3.UP, true) # Invert because looking backwards.
 	return t
 
 func get_transform_between(i1: int, i2: int):
-	var i1_offset = curve.get_closest_offset(curve.get_point_position(i1))
-	var i2_offset = curve.get_closest_offset(curve.get_point_position(i2))
+	var i1_offset = data.get_closest_offset(data.get_point_position(i1))
+	var i2_offset = data.get_closest_offset(data.get_point_position(i2))
 	var center = (i1_offset + i2_offset) / 2.0
-	return curve.sample_baked_with_rotation(center, false, true)
+	return data.sample_baked_with_rotation(center, false, true)
+
+func _update_curve_based_on_scale(idx: int, s: Vector3):
+	data.set_point_scale(idx, s)
+	curve_updated.emit()
 
 func _update_curve_based_on_transform(idx: int, t: Transform3D):
 	# Extend curve if given -1
 	if idx == -1:
-		curve.add_point(t.origin)
-		idx = curve.point_count - 1
+		data.add_point(t.origin)
+		idx = data.point_count - 1
 	
-	curve.set_point_position(idx, t.origin)
+	data.set_point_position(idx, t.origin)
 	
 	var is_start = idx == 0
-	var is_end = idx == (curve.point_count - 1)
+	var is_end = idx == (data.point_count - 1)
 	
 	if !is_start:
-		curve.set_point_in(idx, t.basis.z) # Back
+		data.set_point_in(idx, t.basis.z.normalized()) # Back
 	
 	if !is_start:
-		curve.set_point_out(idx, -t.basis.z) # Front
+		data.set_point_out(idx, -t.basis.z.normalized()) # Front
 	
 	var ref = Plane(t.basis.z).project(Vector3.UP).normalized()
 	var tilt = ref.signed_angle_to(t.basis.y, -t.basis.z)
-	curve.set_point_tilt(idx, tilt)
-	
-	# TODO in/out scale based on distance to/from previous ?
+	data.set_point_tilt(idx, tilt)
 
 	curve_updated.emit()
 
@@ -168,30 +174,31 @@ func _on_curve_updated():
 	_align_controlpoints_to_curve()
 
 func _align_controlpoints_to_curve():
-	if !curve:
+	if !data:
 		return
 	
-	for i in range(curve.point_count):
+	for i in range(data.point_count):
 		var n: EditableCurveControlPoint = context.known_points[i]
 		
 		# Note - we do NOT use sample_baked_with_rotation here
 		# Because the values this produces are != what is actually set at that exact index.
 		# We want to basically recreate what the curve data is at this index (in,out,pos,tilt)
 		
-		n.global_position = curve.get_point_position(i)
+		n.global_position = data.get_point_position(i)
+		n.curve_scale = data.get_point_scale(i)
 		
-		var is_end = i == (curve.point_count - 1)
+		var is_end = i == (data.point_count - 1)
 		if !is_end:
 			# Look at out forwards.
-			var out = curve.get_point_out(i)
+			var out = data.get_point_out(i)
 			
 			if out != Vector3.ZERO:
-				var look_at_up_vector = Vector3.UP.rotated(out.normalized(), curve.get_point_tilt(i))
+				var look_at_up_vector = Vector3.UP.rotated(out.normalized(), data.get_point_tilt(i))
 				n.look_at(n.global_position + out, look_at_up_vector)
 		else:
 			# If end, look at in backwards.
-			var in_dir = curve.get_point_in(i)
+			var in_dir = data.get_point_in(i)
 			
 			if in_dir != Vector3.ZERO:
-				var look_at_up_vector = Vector3.UP.rotated(in_dir.normalized(), -curve.get_point_tilt(i))
+				var look_at_up_vector = Vector3.UP.rotated(in_dir.normalized(), -data.get_point_tilt(i))
 				n.look_at(n.global_position + in_dir, look_at_up_vector, true)

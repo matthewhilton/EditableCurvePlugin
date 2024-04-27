@@ -6,5 +6,6 @@ func _get_axis():
 func _handle_drag_event(event: InputEvent):
 	if !(event is InputEventMouseMotion):
 		return
-
+	
+	print(event)
 	movement_scale.emit(_get_axis() * event.relative.y)

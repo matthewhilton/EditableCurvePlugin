@@ -1,6 +1,6 @@
 class_name CurveStructureInstance extends Node3D
 
-@export var curve_data: CurveData
+@export var curve_data: EditableCurveData
 @export var structure_generator: CurveStructureGenerator
 
 func _ready():

@@ -28,6 +28,11 @@ const mode_mappings = {
 	MODE.SIZE: [ControlPointControl.TYPE.SCALE],
 }
 
+# This is separate from global_transform, since we don't want the transform
+# to affect the node itself, but we want the controls to know it.
+# TODO should global_transform also be done in this way?
+@export var curve_scale := Vector3.ONE
+
 func _ready():
 	if self not in context.known_points:
 		context.known_points.append(self)
@@ -64,7 +69,8 @@ func _input(event):
 	# When this is pressed, we turn on a flag indicating the user could be clicking outside.
 	if event.is_action_pressed("select_control_point"):
 		possible_clickout = true
-	
+
+func _unhandled_input(event):
 	# If the action is released, and this flag is still true, click out is confirmed
 	# and control point deselects self.
 	if event.is_action_released("select_control_point") && possible_clickout && _is_selected():

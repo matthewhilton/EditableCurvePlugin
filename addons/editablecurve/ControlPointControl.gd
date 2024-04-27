@@ -17,6 +17,10 @@ signal movement_rotation(axis: Vector3, amount_rad: float)
 enum TYPE { LINEAR, RADIAL, SCALE }
 @export var type: TYPE = TYPE.LINEAR
 
+var curve_scale:
+	get:
+		return get_parent().curve_scale
+
 # Overwrite in subclass
 func _get_face_normal() -> Vector3:
 	return Vector3.FORWARD

@@ -5,16 +5,15 @@ extends Node3D
 @export var generate_structure: Button
 @export var curve: EditableCurveInstance
 @export var structure: CurveStructureInstance
-@export var path: Path3D
 
 func _ready():
-	#delete_selected.pressed.connect(func(): curve.delete_selected_control())
+	delete_selected.pressed.connect(func(): curve.remove_selected_control())
 	add_new_selected.pressed.connect(_add_new_selected)
 	curve.curve_updated.connect(func(): _regenerate())
 	generate_structure.pressed.connect(func(): _regenerate())
 
 func _regenerate():
-	structure.curve_data.curve = curve.curve
+	structure.curve_data = curve.data
 	structure.regenerate()
 	
 func _add_new_selected():

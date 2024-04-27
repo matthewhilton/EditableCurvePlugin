@@ -49,3 +49,9 @@ static func get_index_to_insert_pos_after(curve: Curve3D, to: Vector3) -> int:
 			return i
 	
 	return -1
+
+static func get_closest_i_to_offset(curve: Curve3D, offset: float) -> int:
+	var point_offsets = range(curve.point_count).map(func(i): return [i, curve.get_closest_offset(curve.get_point_position(i))])
+	point_offsets.sort_custom(func(a,b): return a[1].distance_to(offset) < b[1].distance_to(offset))
+	
+	return point_offsets[0][0]
