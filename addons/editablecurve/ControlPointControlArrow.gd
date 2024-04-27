@@ -1,9 +1,8 @@
 class_name ControlPointControlArrow extends ControlPointControl
 
-# TODO move this into its own script.
-@export var MIN_SCALE := Vector3.ONE
+func _init():
+	type = TYPE.LINEAR
 
-# Arrows only move linearly in the direction of their global Y basis vector.
 func _get_movement_dir() -> Vector3:
 	return global_basis.y
 
@@ -35,15 +34,4 @@ func _handle_drag_event(event: InputEvent):
 	var offset = curve.get_closest_offset(ray)
 	var pos = curve.sample_baked(offset)
 	
-	match type:
-		TYPE.LINEAR:
-			movement_translate.emit(pos - global_position)
-		TYPE.SCALE:
-			var new_scale: Vector3 = curve_scale + (Vector3.RIGHT * -1 * (pos - global_position))
-			
-			# Ensure its always at least the MIN_SCALE
-			new_scale.x = max(new_scale.x, MIN_SCALE.x)
-			new_scale.y = max(new_scale.y, MIN_SCALE.y)
-			new_scale.z = max(new_scale.z, MIN_SCALE.z)
-			
-			movement_scale.emit(new_scale)
+	movement_translate.emit(pos - global_position)

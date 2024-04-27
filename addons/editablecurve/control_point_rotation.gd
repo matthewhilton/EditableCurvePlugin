@@ -2,6 +2,9 @@ class_name ControlPointControlRotation extends ControlPointControl
 
 var previous_angle := 0.0
 
+func _init():
+	type = TYPE.RADIAL
+
 func _ready():
 	drag_start.connect(_reset)
 	drag_end.connect(_reset)

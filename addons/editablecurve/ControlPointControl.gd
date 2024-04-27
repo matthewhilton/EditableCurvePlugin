@@ -15,7 +15,7 @@ signal movement_translate(amount: Vector3)
 signal movement_rotation(axis: Vector3, amount_rad: float)
 
 enum TYPE { LINEAR, RADIAL, SCALE }
-@export var type: TYPE = TYPE.LINEAR
+var type: TYPE
 
 var curve_scale:
 	get:
