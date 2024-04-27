@@ -41,13 +41,18 @@ func sample_scale_at_offset(offset: float) -> Vector3:
 		if this_i_offset < offset:
 			i_prev = i
 			offset_prev = this_i_offset
+			continue
 		
 		if this_i_offset > offset:
 			i_next = i
 			offset_next = this_i_offset
+			continue
 		
 		if i_prev != -1 && i_next != -1:
 			break
+		
+		# If reached here, it means we got no matches.
+		return Vector3.ONE
 	
 	assert(offset_prev < offset)
 	assert(offset_next > offset)

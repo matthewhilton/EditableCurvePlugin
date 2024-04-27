@@ -1,6 +1,5 @@
 class_name ControlPointControlScaleArrow extends ControlPointControl
 
-# TODO move this into its own script.
 @export var MIN_SCALE := Vector3.ONE
 @export var scale_axis := Vector3.FORWARD
 
@@ -35,8 +34,8 @@ func _handle_drag_event(event: InputEvent):
 	
 	# Make a fake curve3D along the movement dir.
 	var curve := Curve3D.new()
-	curve.add_point(global_position + _get_movement_dir() * 10)
-	curve.add_point(global_position - _get_movement_dir() * 10)
+	curve.add_point(global_position + _get_movement_dir() * 20)
+	curve.add_point(global_position - _get_movement_dir() * 20)
 	
 	# Sample to snap to the linear axis.
 	var drag_pos = curve.get_closest_point(ray_hit)
@@ -45,20 +44,32 @@ func _handle_drag_event(event: InputEvent):
 	if !last_drag_pos:
 		last_drag_pos = drag_pos
 		return
-
+	
 	# Calculate the diff from the previous frame.
-	var diff = drag_pos - last_drag_pos
+	var diff = (drag_pos - last_drag_pos)
 	last_drag_pos = drag_pos
+	
+	var scale_val = scale_axis * diff.y
+	movement_scale.emit(scale_val)
+	
+	#print(diff)
+	
+	#var current_scale = get_parent().point_data.global_transform.basis.get_scale()
+	#var change = _get_movement_dir() * diff
+	#print("scale diff: ", diff, " change: ", change, " dir: ", _get_movement_dir())
+	
+	# TODO.
 	
 	# Convert the diff along the axis of the model, to the desired scale diff
 	# TODO should be able to calculate this from the pose, but this works for now.
-	var maxaxis_i = diff.abs().max_axis_index()
-	var scale_delta = scale_axis * diff[maxaxis_i]
-	var new_scale = curve_scale + scale_delta
-
-	# Ensure its always at least the MIN_SCALE
-	new_scale.x = max(new_scale.x, MIN_SCALE.x)
-	new_scale.y = max(new_scale.y, MIN_SCALE.y)
-	new_scale.z = max(new_scale.z, MIN_SCALE.z)
-	
-	movement_scale.emit(new_scale)
+	#var maxaxis_i = diff.abs().max_axis_index()
+	#var scale_delta = scale_axis * diff[maxaxis_i]
+	#var current_scale = get_parent().curve_transform_tracker.scale
+	#var new_scale = current_scale + scale_delta
+	#
+	## Ensure its always at least the MIN_SCALE
+	#new_scale.x = max(new_scale.x, MIN_SCALE.x)
+	#new_scale.y = max(new_scale.y, MIN_SCALE.y)
+	#new_scale.z = max(new_scale.z, MIN_SCALE.z)
+	#
+	#movement_scale.emit(new_scale)

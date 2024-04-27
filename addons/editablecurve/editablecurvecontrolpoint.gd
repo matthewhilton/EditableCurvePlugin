@@ -9,14 +9,13 @@ class_name EditableCurveControlPoint extends StaticBody3D
 signal mode_changed(to: MODE)
 
 signal movement_start
-signal scale_update(n: EditableCurveControlPoint, s: Vector3)
-signal movement_update(n: EditableCurveControlPoint, t: Transform3D)
+signal movement_update(n: EditableCurveControlPoint, data: CurvePointData)
 signal movement_end
 
 # Flag used to detect if user clicks outside of control, in order to deselect control.
 var possible_clickout := false
 
-enum MODE { TRANSLATE, ROTATION, SIZE }
+enum MODE { TRANSLATE, SIZE, ROTATION }
 var mode := MODE.TRANSLATE:
 	set(v):
 		mode = v
@@ -28,10 +27,7 @@ const mode_mappings = {
 	MODE.SIZE: [ControlPointControl.TYPE.SCALE],
 }
 
-# This is separate from global_transform, since we don't want the transform
-# to affect the node itself, but we want the controls to know it.
-# TODO should global_transform also be done in this way?
-@export var curve_scale := Vector3.ONE
+var point_data := CurvePointData.new()
 
 func _ready():
 	if self not in context.known_points:
@@ -102,18 +98,26 @@ func _update_control_visibility():
 	for control in controls:
 		control.visible = _is_selected()
 
-func _handle_scale(scale_value: Vector3):
-	scale_update.emit(self, scale_value)
+func _handle_scale(scale_delta: Vector3):
+	var new_data = point_data.duplicate()
+	new_data.axis_scale += scale_delta
+	
+	# Ensure it is always >= Vector3.ONE
+	new_data.axis_scale.x = max(new_data.axis_scale.x, 1)
+	new_data.axis_scale.y = max(new_data.axis_scale.y, 1)
+	new_data.axis_scale.z = max(new_data.axis_scale.z, 1)
+	
+	movement_update.emit(self, new_data)
 	
 func _handle_rotation(axis: Vector3, angle_rad: float):
-	var t = global_transform
-	t.basis = t.basis.rotated(axis.normalized(), angle_rad)
-	movement_update.emit(self, t)
+	var new_data = point_data.duplicate()
+	new_data.global_transform.basis = new_data.global_transform.basis.rotated(axis.normalized(), angle_rad)
+	movement_update.emit(self, new_data)
 
 func _handle_translate(movement: Vector3):
-	var t = global_transform
-	t.origin += movement
-	movement_update.emit(self, t)
+	var new_data = point_data.duplicate()
+	new_data.global_transform.origin += movement
+	movement_update.emit(self, new_data)
 
 func get_curve_index() -> int:
 	return context.known_points.find(self)

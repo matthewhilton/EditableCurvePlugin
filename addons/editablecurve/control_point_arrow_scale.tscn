@@ -1,6 +1,6 @@
 [gd_scene load_steps=5 format=3 uid="uid://bwo8c3xrle2od"]
 
-[ext_resource type="Script" path="res://addons/editablecurve/ControlPointControlScaleArrow.gd" id="1_87lsg"]
+[ext_resource type="Script" path="res://addons/editablecurve/ControlPointControlScaleArrow.gd" id="1_h1t2e"]
 [ext_resource type="ArrayMesh" uid="uid://d0gv6hashxh7m" path="res://addons/editablecurve/arrow.obj" id="2_p2l5p"]
 
 [sub_resource type="CylinderShape3D" id="CylinderShape3D_booum"]
@@ -12,7 +12,7 @@ albedo_color = Color(0.8, 0.152941, 0.364706, 1)
 
 [node name="ControlPointControlArrowScale" type="StaticBody3D"]
 collision_layer = 2
-script = ExtResource("1_87lsg")
+script = ExtResource("1_h1t2e")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.100532, 0)
